@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Baby Games 🐣</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+  html, body { height: 100%; margin: 0; overflow: hidden; }
+  body {
+    font-family: "Comic Sans MS", "Baloo", system-ui, sans-serif;
+    background: linear-gradient(160deg, #ffe680 0%, #ffb3c6 50%, #a0e7ff 100%);
+    touch-action: manipulation;
+  }
+  .screen { position: fixed; inset: 0; display: none; flex-direction: column;
+            align-items: center; justify-content: center; padding: 3vh; }
+  .screen.on { display: flex; }
+
+  /* ---- Home menu ---- */
+  #home { justify-content:flex-start; overflow-y:auto; padding-top:4vh; }
+  #home h1 { font-size:min(11vw,56px); color:#fff; text-shadow:3px 3px 0 #ff8fab; margin:2vh 0 2vh; }
+  .menu-btn {
+    width: min(80vw, 520px); max-width: 90vw;
+    background:#fff; border:none; border-radius:26px; margin:1.2vh 0;
+    padding: 2.8vh 3vw; font-size: min(6.5vw,30px); font-weight:800; color:#444;
+    box-shadow:0 8px 22px rgba(0,0,0,.18); cursor:pointer; transition:transform .1s;
+    display:flex; align-items:center; gap:18px; justify-content:center; flex:0 0 auto;
+  }
+  .menu-btn:active { transform:scale(.95); }
+  .menu-btn .ic { font-size: min(10vw,44px); }
+
+  /* ---- Back button (shared) ---- */
+  .back {
+    position:fixed; top:14px; left:14px; z-index:5;
+    background:#fff; border:none; border-radius:50%;
+    width:64px; height:64px; font-size:30px; cursor:pointer;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);
+  }
+  .back:active { transform:scale(.9); }
+
+  /* ---- Game 1: Namer ---- */
+  #stage { width:min(78vw,78vh); height:min(78vw,78vh); background:#fff; border-radius:40px;
+           box-shadow:0 12px 40px rgba(0,0,0,.2); display:flex; align-items:center;
+           justify-content:center; cursor:pointer; transition:transform .12s; }
+  #stage:active { transform:scale(.95); }
+  #pic { font-size:min(44vw,44vh); line-height:1; pointer-events:none; }
+  #name1 { margin-top:2.5vh; font-size:min(11vw,11vh); font-weight:800; color:#444;
+           text-shadow:2px 2px 0 #fff; min-height:1em; letter-spacing:2px; }
+
+  /* ---- Game 2: Find It ---- */
+  #prompt { font-size:min(9vw,44px); font-weight:800; color:#444; text-shadow:2px 2px 0 #fff;
+            margin-bottom:3vh; text-align:center; }
+  #prompt b { color:#e5375f; }
+  #choices { display:flex; gap:3vw; flex-wrap:wrap; justify-content:center; }
+  .choice { width:min(26vw,220px); height:min(26vw,220px); background:#fff; border:none;
+            border-radius:30px; font-size:min(16vw,120px); box-shadow:0 8px 22px rgba(0,0,0,.18);
+            cursor:pointer; transition:transform .1s; display:flex; align-items:center; justify-content:center; }
+  .choice:active { transform:scale(.92); }
+  .choice.wrong { animation: shake .4s; }
+  .choice.right { animation: grow .5s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-10px)} 75%{transform:translateX(10px)} }
+  @keyframes grow  { 0%{transform:scale(1)} 60%{transform:scale(1.25)} 100%{transform:scale(1)} }
+
+  /* ---- Game 3: Pop It ---- */
+  #pop { overflow:hidden; }
+  #pond { position:absolute; inset:0; }
+  #score { position:fixed; top:16px; right:22px; z-index:6; font-size:min(12vw,56px);
+           font-weight:800; color:#fff; text-shadow:2px 2px 0 #ff8fab; }
+  .bubble { position:absolute; bottom:-22vh; border-radius:50%;
+            display:flex; align-items:center; justify-content:center;
+            font-size:min(13vw,86px); cursor:pointer;
+            box-shadow: inset -8px -8px 20px rgba(0,0,0,.12), inset 8px 8px 20px rgba(255,255,255,.55);
+            animation: rise linear forwards; }
+  .bubble:active { transform:scale(.9); }
+  @keyframes rise { from{ transform: translateY(0) } to{ transform: translateY(-130vh) } }
+  @keyframes burst { 0%{transform:scale(1);opacity:1} 100%{transform:scale(1.9);opacity:0} }
+  .bubble.burst { animation: burst .25s forwards; }
+
+  /* ---- Game 4: Colors ---- */
+  #colors { cursor:pointer; transition: background .35s ease; }
+  #colorName { font-size:min(14vw,90px); font-weight:800; color:#fff;
+               text-shadow:3px 3px 0 rgba(0,0,0,.25); letter-spacing:2px; pointer-events:none; }
+
+  /* ---- Game 5: Count It ---- */
+  #countPrompt { font-size:min(9vw,42px); font-weight:800; color:#444; text-shadow:2px 2px 0 #fff; margin-bottom:2vh; }
+  #countArea { display:flex; flex-wrap:wrap; gap:2.5vw; justify-content:center; align-items:center;
+               max-width:90vw; }
+  .counter { font-size:min(18vw,110px); cursor:pointer; transition:transform .1s; line-height:1; }
+  .counter:active { transform:scale(.9); }
+  .counter.counted { animation: grow .5s; }
+  #countTally { margin-top:2.5vh; font-size:min(12vw,64px); font-weight:800; color:#e5375f; text-shadow:2px 2px 0 #fff; min-height:1.1em; }
+
+  /* ---- Game 6: Match Pairs ---- */
+  #matchPrompt { font-size:min(8vw,38px); font-weight:800; color:#444; text-shadow:2px 2px 0 #fff; margin-bottom:2vh; }
+  .matchrow { display:flex; gap:3vw; justify-content:center; margin:1.2vh 0; }
+  .card { width:min(20vw,150px); height:min(20vw,150px); background:#fff; border:none; border-radius:24px;
+          font-size:min(12vw,84px); box-shadow:0 6px 18px rgba(0,0,0,.16); cursor:pointer;
+          transition:transform .1s, background .2s; display:flex; align-items:center; justify-content:center; }
+  .card:active { transform:scale(.92); }
+  .card.picked { background:#fff3b0; transform:scale(1.06); }
+  .card.done { background:#c8f7c5; opacity:.55; pointer-events:none; }
+  .card.miss { animation: shake .4s; }
+
+  @keyframes pop { 0%{transform:scale(.3);opacity:0} 60%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
+  @keyframes wob { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-8deg)} 75%{transform:rotate(8deg)} }
+  .pop { animation: pop .5s ease; }
+  .wob { animation: wob .5s ease; }
+
+  .spark { position:fixed; font-size:40px; pointer-events:none; z-index:10; animation: fly 1s ease-out forwards; }
+  @keyframes fly { 0%{transform:translate(0,0) scale(.4);opacity:1} 100%{transform:translate(var(--dx),var(--dy)) scale(1.4) rotate(var(--r));opacity:0} }
+</style>
+</head>
+<body>
+
+  <!-- HOME -->
+  <div id="home" class="screen on">
+    <h1>Baby Games 🐣</h1>
+    <button class="menu-btn" onclick="startNamer()"><span class="ic">👉</span> Name It!</button>
+    <button class="menu-btn" onclick="startFind()"><span class="ic">🔍</span> Find It!</button>
+    <button class="menu-btn" onclick="startPop()"><span class="ic">🫧</span> Pop It!</button>
+    <button class="menu-btn" onclick="startColors()"><span class="ic">🎨</span> Colors!</button>
+    <button class="menu-btn" onclick="startCount()"><span class="ic">🔢</span> Count It!</button>
+    <button class="menu-btn" onclick="startMatch()"><span class="ic">🧩</span> Match Pairs!</button>
+  </div>
+
+  <!-- GAME 1: NAME IT -->
+  <div id="namer" class="screen">
+    <button class="back" onclick="goHome()">🏠</button>
+    <div id="stage"><div id="pic">🐣</div></div>
+    <div id="name1"></div>
+  </div>
+
+  <!-- GAME 2: FIND IT -->
+  <div id="find" class="screen">
+    <button class="back" onclick="goHome()">🏠</button>
+    <div id="prompt"></div>
+    <div id="choices"></div>
+  </div>
+
+  <!-- GAME 3: POP IT -->
+  <div id="pop" class="screen">
+    <button class="back" onclick="stopPop()">🏠</button>
+    <div id="score">0</div>
+    <div id="pond"></div>
+  </div>
+
+  <!-- GAME 4: COLORS -->
+  <div id="colors" class="screen">
+    <button class="back" onclick="goHome()">🏠</button>
+    <div id="colorName"></div>
+  </div>
+
+  <!-- GAME 5: COUNT IT -->
+  <div id="count" class="screen">
+    <button class="back" onclick="goHome()">🏠</button>
+    <div id="countPrompt">How many?</div>
+    <div id="countArea"></div>
+    <div id="countTally"></div>
+  </div>
+
+  <!-- GAME 6: MATCH PAIRS -->
+  <div id="match" class="screen">
+    <button class="back" onclick="goHome()">🏠</button>
+    <div id="matchPrompt">Find the pairs!</div>
+    <div id="matchTop" class="matchrow"></div>
+    <div id="matchBottom" class="matchrow"></div>
+  </div>
+
+<script>
+  // ---- Shared picture set (48 items) ----
+  const ITEMS = [
+    ["🐶","Dog"],["🐱","Cat"],["🐮","Cow"],["🐷","Pig"],["🐰","Bunny"],["🐥","Chick"],
+    ["🦆","Duck"],["🐴","Horse"],["🐟","Fish"],["🦋","Butterfly"],["🐝","Bee"],["🐘","Elephant"],
+    ["🦁","Lion"],["🐯","Tiger"],["🐻","Bear"],["🐒","Monkey"],["🐧","Penguin"],["🦉","Owl"],
+    ["🐸","Frog"],["🐢","Turtle"],["🐑","Sheep"],["🐔","Hen"],
+    ["🍎","Apple"],["🍌","Banana"],["🍓","Berry"],["🥕","Carrot"],["🍇","Grapes"],["🍊","Orange"],
+    ["🍉","Melon"],["🌽","Corn"],
+    ["🚗","Car"],["🚌","Bus"],["✈️","Plane"],["🚂","Train"],["🚜","Tractor"],["🚲","Bike"],
+    ["🚤","Boat"],["🚁","Helicopter"],
+    ["🌟","Star"],["🌙","Moon"],["☀️","Sun"],["🌈","Rainbow"],["🎈","Balloon"],["⚽","Ball"],
+    ["🧸","Teddy"],["🌸","Flower"],["👶","Baby"],["🍦","Ice cream"]
+  ];
+
+  // ---- Speech ----
+  let voice = null;
+  function pickVoice() {
+    const vs = speechSynthesis.getVoices();
+    voice = vs.find(v => /en(-|_)?(US|GB)/i.test(v.lang) && /female|samantha|karen|zira|google/i.test(v.name))
+         || vs.find(v => /^en/i.test(v.lang)) || vs[0] || null;
+  }
+  if ("speechSynthesis" in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+  function say(text, rate=0.85, pitch=1.3) {
+    if (!("speechSynthesis" in window)) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = rate; u.pitch = pitch; u.volume = 1;
+    if (voice) u.voice = voice;
+    speechSynthesis.speak(u);
+  }
+
+  // ---- Confetti ----
+  function confetti() {
+    const em = ["🎉","⭐","💖","✨","🎊"];
+    for (let k = 0; k < 14; k++) {
+      const s = document.createElement("div");
+      s.className = "spark";
+      s.textContent = em[Math.floor(Math.random()*em.length)];
+      s.style.left = (innerWidth/2)+"px"; s.style.top = (innerHeight/2)+"px";
+      s.style.setProperty("--dx",(Math.random()*400-200)+"px");
+      s.style.setProperty("--dy",(Math.random()*-400-60)+"px");
+      s.style.setProperty("--r",(Math.random()*720-360)+"deg");
+      document.body.appendChild(s);
+      setTimeout(()=>s.remove(),1000);
+    }
+  }
+  function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+  // ---- Screen switching ----
+  function show(id){ document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on")); document.getElementById(id).classList.add("on"); }
+  function goHome(){ speechSynthesis.cancel(); show("home"); }
+
+  // ================= GAME 1: NAME IT =================
+  // Shuffled deck: every item shown once before ANY repeats.
+  let deck = [], lastShown = -1;
+  function refillDeck(){
+    deck = shuffle(ITEMS.map((_,i)=>i));
+    if (deck.length>1 && deck[deck.length-1]===lastShown){ [deck[deck.length-1],deck[0]]=[deck[0],deck[deck.length-1]]; }
+  }
+  function nextItem(){ if(deck.length===0) refillDeck(); const i=deck.pop(); lastShown=i; return ITEMS[i]; }
+
+  const pic = document.getElementById("pic");
+  const name1 = document.getElementById("name1");
+  function nameStep(first){
+    const [emoji,word] = nextItem();
+    pic.textContent = emoji; name1.textContent = word;
+    pic.classList.remove("pop"); void pic.offsetWidth; pic.classList.add("pop");
+    say(word); if(!first) confetti();
+  }
+  document.getElementById("stage").addEventListener("click", ()=>{
+    name1.classList.remove("wob"); void name1.offsetWidth; name1.classList.add("wob");
+    nameStep(false);
+  });
+  function startNamer(){ deck=[]; lastShown=-1; show("namer"); nameStep(true); }
+
+  // ================= GAME 2: FIND IT =================
+  // Say a target; show 3 choices; tap the right one. Never repeat target back-to-back.
+  const promptEl = document.getElementById("prompt");
+  const choicesEl = document.getElementById("choices");
+  let lastTarget = -1;
+
+  function findRound(){
+    let ti; do { ti = Math.floor(Math.random()*ITEMS.length); } while (ti===lastTarget);
+    lastTarget = ti;
+    const target = ITEMS[ti];
+
+    // two distractors, distinct from target and each other
+    const pool = ITEMS.map((_,i)=>i).filter(i=>i!==ti);
+    shuffle(pool);
+    const opts = [ti, pool[0], pool[1]];
+    shuffle(opts);
+
+    promptEl.innerHTML = "Where is the <b>"+target[1]+"</b>?";
+    say("Find the "+target[1]);
+
+    choicesEl.innerHTML = "";
+    opts.forEach(oi=>{
+      const b = document.createElement("button");
+      b.className = "choice"; b.textContent = ITEMS[oi][0];
+      b.onclick = ()=>{
+        if (oi===ti){
+          b.classList.add("right"); say("Yes! "+target[1]); confetti();
+          setTimeout(findRound, 1200);
+        } else {
+          b.classList.add("wrong"); say("Try again");
+          setTimeout(()=>b.classList.remove("wrong"),400);
+        }
+      };
+      choicesEl.appendChild(b);
+    });
+  }
+  function startFind(){ lastTarget=-1; show("find"); findRound(); }
+
+  // ================= GAME 3: POP IT =================
+  // Colorful bubbles float up; tap to pop with a sound + count. Cause-and-effect + early counting.
+  const pond = document.getElementById("pond");
+  const scoreEl = document.getElementById("score");
+  const COLORS = ["#ff8fab","#ffd166","#8ac6ff","#a0e77f","#c79bff","#ff9e6d","#6ee7d6"];
+  const FACES  = ["😀","😄","🤩","😊","🥳","😺","🐥","⭐","💖","🎈"];
+  let popScore = 0, spawnTimer = null;
+
+  // Simple WebAudio "pop" — no external sound files.
+  let actx = null;
+  function popSound(){
+    try {
+      actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = "sine"; o.frequency.setValueAtTime(700, actx.currentTime);
+      o.frequency.exponentialRampToValueAtTime(180, actx.currentTime+0.12);
+      g.gain.setValueAtTime(0.35, actx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime+0.18);
+      o.connect(g); g.connect(actx.destination);
+      o.start(); o.stop(actx.currentTime+0.2);
+    } catch(e){}
+  }
+
+  function spawnBubble(){
+    if (!document.getElementById("pop").classList.contains("on")) return;
+    const size = 90 + Math.random()*80;        // px
+    const b = document.createElement("div");
+    b.className = "bubble";
+    b.style.width = size+"px"; b.style.height = size+"px";
+    b.style.left = Math.random()*(innerWidth - size) + "px";
+    b.style.background = COLORS[Math.floor(Math.random()*COLORS.length)];
+    b.style.fontSize = (size*0.55)+"px";
+    b.textContent = FACES[Math.floor(Math.random()*FACES.length)];
+    const dur = 5 + Math.random()*3;            // seconds to float up
+    b.style.animationDuration = dur + "s";
+    b.addEventListener("animationend", ()=>b.remove());   // reached top, remove
+    b.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      if (b.dataset.popped) return; b.dataset.popped = "1";
+      popScore++; scoreEl.textContent = popScore;
+      popSound();
+      if (popScore % 5 === 0) { say(String(popScore)); confetti(); } // celebrate every 5
+      b.classList.add("burst");
+      setTimeout(()=>b.remove(), 250);
+    });
+    pond.appendChild(b);
+  }
+
+  function startPop(){
+    popScore = 0; scoreEl.textContent = "0"; pond.innerHTML = "";
+    show("pop");
+    clearInterval(spawnTimer);
+    spawnTimer = setInterval(spawnBubble, 750);
+    for (let i=0;i<3;i++) setTimeout(spawnBubble, i*250);   // quick start
+  }
+  function stopPop(){ clearInterval(spawnTimer); pond.innerHTML = ""; goHome(); }
+
+  // ================= GAME 4: COLORS =================
+  // Whole screen is one color; tap anywhere for a new one. No repeats until all shown.
+  const COLOR_LIST = [
+    ["Red","#e8422c"],["Orange","#ff8c1a"],["Yellow","#ffd23f"],["Green","#3fbf4f"],
+    ["Blue","#2f8fff"],["Purple","#9b5de5"],["Pink","#ff6fb0"],["Brown","#a3673f"],
+    ["Black","#333333"],["White","#f7f7f7"]
+  ];
+  const colorsScreen = document.getElementById("colors");
+  const colorNameEl = document.getElementById("colorName");
+  let colorDeck = [], lastColor = -1;
+  function refillColorDeck(){
+    colorDeck = shuffle(COLOR_LIST.map((_,i)=>i));
+    if (colorDeck.length>1 && colorDeck[colorDeck.length-1]===lastColor){
+      [colorDeck[colorDeck.length-1],colorDeck[0]]=[colorDeck[0],colorDeck[colorDeck.length-1]];
+    }
+  }
+  function colorStep(first){
+    if (colorDeck.length===0) refillColorDeck();
+    const i = colorDeck.pop(); lastColor = i;
+    const [word, hex] = COLOR_LIST[i];
+    colorsScreen.style.background = hex;
+    // keep the label readable on light colors
+    const light = ["Yellow","White"].includes(word);
+    colorNameEl.style.color = light ? "#333" : "#fff";
+    colorNameEl.style.textShadow = light ? "2px 2px 0 rgba(255,255,255,.6)" : "3px 3px 0 rgba(0,0,0,.25)";
+    colorNameEl.textContent = word;
+    colorNameEl.classList.remove("pop"); void colorNameEl.offsetWidth; colorNameEl.classList.add("pop");
+    say(word); if(!first) confetti();
+  }
+  colorsScreen.addEventListener("click", ()=>colorStep(false));
+  function startColors(){ colorDeck=[]; lastColor=-1; show("colors"); colorStep(true); }
+
+  // ================= GAME 5: COUNT IT =================
+  // Show 1–5 identical items; tap each to count aloud (one-to-one correspondence).
+  const countArea = document.getElementById("countArea");
+  const countTally = document.getElementById("countTally");
+  const countPrompt = document.getElementById("countPrompt");
+  let countTotal = 0, counted = 0;
+
+  function countRound(){
+    counted = 0; countTally.textContent = "";
+    countTotal = 1 + Math.floor(Math.random()*5);           // 1..5
+    const [emoji, word] = ITEMS[Math.floor(Math.random()*ITEMS.length)];
+    countPrompt.textContent = "How many? Tap each one!";
+    say("How many?");
+    countArea.innerHTML = "";
+    for (let n=0; n<countTotal; n++){
+      const el = document.createElement("div");
+      el.className = "counter"; el.textContent = emoji;
+      el.onclick = ()=>{
+        if (el.dataset.done) return; el.dataset.done = "1";
+        counted++;
+        el.classList.add("counted");
+        countTally.textContent = counted;
+        say(String(counted));
+        if (counted === countTotal){
+          setTimeout(()=>{ say(counted + " " + word + (counted>1?"s":"")); confetti(); }, 500);
+          setTimeout(countRound, 2200);
+        }
+      };
+      countArea.appendChild(el);
+    }
+  }
+  function startCount(){ show("count"); countRound(); }
+
+  // ================= GAME 6: MATCH PAIRS =================
+  // Top row + shuffled bottom row of the same items; tap top then its twin below.
+  const matchTop = document.getElementById("matchTop");
+  const matchBottom = document.getElementById("matchBottom");
+  const matchPrompt = document.getElementById("matchPrompt");
+  const MATCH_N = 3;                 // 3 pairs — gentle for a toddler
+  let picked = null, pairsLeft = 0;
+
+  function buildRow(container, order){
+    container.innerHTML = "";
+    order.forEach(idx=>{
+      const c = document.createElement("button");
+      c.className = "card"; c.textContent = ITEMS[idx][0]; c.dataset.idx = idx;
+      c.onclick = ()=>onCard(c, idx);
+      container.appendChild(c);
+    });
+  }
+
+  function onCard(card, idx){
+    if (card.classList.contains("done")) return;
+    if (!picked){
+      picked = card; card.classList.add("picked");
+      say(ITEMS[idx][1]);
+      return;
+    }
+    if (picked === card){ picked.classList.remove("picked"); picked = null; return; }
+    if (Number(picked.dataset.idx) === idx){
+      // match!
+      picked.classList.remove("picked"); picked.classList.add("done"); card.classList.add("done");
+      say("Match! " + ITEMS[idx][1]); confetti();
+      picked = null; pairsLeft--;
+      if (pairsLeft === 0){ setTimeout(()=>{ say("All done!"); confetti(); matchRound(); }, 1400); }
+    } else {
+      // miss
+      const wrong = picked; picked.classList.remove("picked"); picked = null;
+      card.classList.add("miss"); say("Try again");
+      setTimeout(()=>card.classList.remove("miss"), 400);
+    }
+  }
+
+  function matchRound(){
+    const pool = shuffle(ITEMS.map((_,i)=>i)).slice(0, MATCH_N);
+    pairsLeft = MATCH_N; picked = null;
+    matchPrompt.textContent = "Tap two that are the same!";
+    buildRow(matchTop, shuffle(pool.slice()));
+    buildRow(matchBottom, shuffle(pool.slice()));
+  }
+  function startMatch(){ show("match"); matchRound(); }
+</script>
+</body>
+</html>
